@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0d3b3a">
   <title>תמחור פריטים | י.ה.ב רג'ואן</title>
 
-  <!-- Heebo: purpose-built Hebrew family, weights tuned for screen -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,48 +13,97 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Subtle background texture, set in CSS via radial gradients -->
   <div class="backdrop" aria-hidden="true"></div>
 
   <main class="app">
     <header class="app__header">
       <div class="brand">
         <div class="brand__mark" aria-hidden="true">
-          <!-- Simple SVG mark: a stylized 'יה' monogram in a rounded square -->
           <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="2" width="36" height="36" rx="9" fill="currentColor"/>
-            <path d="M14 12 L14 28 M14 12 L20 12 M26 12 L26 28 L20 28" 
-                  stroke="#fdfaf3" stroke-width="2.5" stroke-linecap="round" 
+            <path d="M14 12 L14 28 M14 12 L20 12 M26 12 L26 28 L20 28"
+                  stroke="#fdfaf3" stroke-width="2.5" stroke-linecap="round"
                   stroke-linejoin="round" fill="none"/>
           </svg>
         </div>
         <div class="brand__text">
           <h1 class="brand__name">י.ה.ב רג'ואן</h1>
-          <p class="brand__tag">תמחור פריטים</p>
+          <p class="brand__tag" id="project-name">תמחור פריטים</p>
         </div>
       </div>
     </header>
 
+    <!-- Status container — swapped between states -->
     <section class="status-card" id="status-card">
-      <div class="status-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2 L20 7 L20 17 L12 22 L4 17 L4 7 Z" 
-                stroke="currentColor" stroke-width="1.5" 
-                stroke-linejoin="round" fill="none"/>
-          <path d="M12 2 L12 22 M4 7 L20 7 M4 17 L20 17" 
-                stroke="currentColor" stroke-width="1.5" 
-                stroke-linejoin="round" opacity="0.4"/>
-        </svg>
+
+      <!-- LOADING (initial state) -->
+      <div class="state state--loading" id="state-loading">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2 class="state__title">טוען פריטים...</h2>
+        <p class="state__body">רגע אחד</p>
       </div>
-      <h2 class="status-card__title">האתר בהקמה</h2>
-      <p class="status-card__body">
-        כאן יופיעו הפריטים מכתב הכמויות שלך לתמחור.
-      </p>
-      <div class="status-card__divider" aria-hidden="true"></div>
-      <p class="status-card__hint">
-        אם הגעת לכאן מהוואטסאפ, חזור בעוד מספר דקות.
-      </p>
-      <div class="token-display" id="token-display"></div>
+
+      <!-- ERROR: missing token -->
+      <div class="state state--hidden" id="state-no-token">
+        <div class="state__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 8 L12 13 M12 16 L12 16.5" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="state__title">קישור לא תקין</h2>
+        <p class="state__body">הקישור שקיבלת אינו מכיל מזהה. אנא חזור לוואטסאפ ולחץ על הקישור המקורי.</p>
+      </div>
+
+      <!-- ERROR: expired or not found -->
+      <div class="state state--hidden" id="state-expired">
+        <div class="state__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 7 L12 12 L15 14" stroke="currentColor"
+                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="state__title">הקישור פג תוקף</h2>
+        <p class="state__body">קישור זה כבר אושר או שעברו 7 ימים מיצירתו.</p>
+        <div class="state__divider" aria-hidden="true"></div>
+        <p class="state__hint">אנא העלה את כתב הכמויות מחדש בוואטסאפ כדי לקבל קישור חדש.</p>
+      </div>
+
+      <!-- ERROR: server / network -->
+      <div class="state state--hidden" id="state-error">
+        <div class="state__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3 L21 19 L3 19 Z" stroke="currentColor"
+                  stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M12 10 L12 14 M12 16.5 L12 17" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 class="state__title">שגיאה זמנית</h2>
+        <p class="state__body">לא הצלחנו לטעון את הפריטים. נסה שוב בעוד מספר שניות.</p>
+        <button class="state__btn" id="retry-btn" type="button">נסה שוב</button>
+      </div>
+
+      <!-- SUCCESS: data loaded (preview only — Y10 will replace this) -->
+      <div class="state state--hidden" id="state-loaded">
+        <div class="state__icon state__icon--success" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12 L10 17 L19 8" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="state__title">החיבור פועל</h2>
+        <p class="state__body">נמצאו <span id="item-count">0</span> פריטים לתמחור.</p>
+        <div class="state__divider" aria-hidden="true"></div>
+        <p class="state__hint">בקרוב כאן תהיה הטופס המלא לתמחור.</p>
+        <details class="debug-panel" id="debug-panel">
+          <summary>נתונים גולמיים (לבדיקה)</summary>
+          <pre id="debug-data"></pre>
+        </details>
+      </div>
+
     </section>
 
     <footer class="app__footer">
