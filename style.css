@@ -1,59 +1,46 @@
 /* =========================================================
-   Y9 placeholder — visual baseline for Y10
-   Aesthetic: warm paper + deep teal. Calm, grounded,
-   trade-professional. Mobile-first, big tap targets,
-   high contrast, clear hierarchy.
+   Y9 placeholder + API integration scaffold
+   Adds: loading/error/success state styles, spinner, debug panel.
 ========================================================= */
 
 :root {
-  /* Surface palette — warm off-white paper, never pure white */
-  --bg:           #f4ede0;   /* page background, warm cream */
-  --bg-tint:     #ebe2d0;   /* slightly deeper for backdrop accents */
-  --surface:     #fdfaf3;   /* card surface, brighter than bg */
-  --surface-2:   #f8f1e4;   /* alternate surface, e.g. dividers */
+  --bg:           #f4ede0;
+  --bg-tint:     #ebe2d0;
+  --surface:     #fdfaf3;
+  --surface-2:   #f8f1e4;
 
-  /* Brand — deep teal, reads as construction-trade-serious */
   --brand:        #0d3b3a;
   --brand-soft:  #1a5957;
   --brand-tint:  #d6e3e0;
 
-  /* Accent — warm clay, used sparingly */
   --accent:       #c45a36;
+  --success:      #2d7a4f;
+  --warn:         #b8631a;
+  --danger:       #a83a2c;
 
-  /* Ink */
-  --ink:          #1a2424;   /* primary text */
-  --ink-mid:      #4a5555;   /* secondary text */
-  --ink-dim:      #7a8585;   /* tertiary, captions */
+  --ink:          #1a2424;
+  --ink-mid:      #4a5555;
+  --ink-dim:      #7a8585;
 
-  /* Lines */
   --line:         #d8cfbb;
   --line-soft:   rgba(13, 59, 58, 0.08);
 
-  /* Radii */
   --r-sm: 10px;
   --r-md: 16px;
   --r-lg: 22px;
 
-  /* Shadows — soft, paper-like, never harsh */
   --shadow-1: 0 1px 2px rgba(26, 36, 36, 0.04),
               0 2px 8px rgba(26, 36, 36, 0.04);
   --shadow-2: 0 2px 4px rgba(26, 36, 36, 0.05),
               0 8px 24px rgba(26, 36, 36, 0.06);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 body {
-  font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 
+  font-family: 'Heebo', -apple-system, BlinkMacSystemFont,
                'Segoe UI', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.55;
@@ -61,18 +48,14 @@ body {
   background: var(--bg);
   min-height: 100vh;
   min-height: 100dvh;
-  /* iOS safe areas */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  /* prevent rubber-band white flash */
   overscroll-behavior-y: contain;
-  /* Subtle paper grain via repeating gradient */
   background-image:
     radial-gradient(circle at 1px 1px, var(--line-soft) 1px, transparent 0);
   background-size: 22px 22px;
 }
 
-/* Decorative backdrop — soft glows, hidden on small screens to keep things calm */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -98,9 +81,7 @@ body {
 
 /* ============ HEADER ============ */
 
-.app__header {
-  padding-top: 0.5rem;
-}
+.app__header { padding-top: 0.5rem; }
 
 .brand {
   display: flex;
@@ -116,16 +97,9 @@ body {
   filter: drop-shadow(0 2px 4px rgba(13, 59, 58, 0.15));
 }
 
-.brand__mark svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+.brand__mark svg { width: 100%; height: 100%; display: block; }
 
-.brand__text {
-  flex: 1;
-  min-width: 0;
-}
+.brand__text { flex: 1; min-width: 0; }
 
 .brand__name {
   font-size: 1.125rem;
@@ -140,6 +114,9 @@ body {
   font-weight: 500;
   color: var(--ink-mid);
   margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============ STATUS CARD ============ */
@@ -150,16 +127,13 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: 2.5rem 1.75rem 2rem;
-  text-align: center;
   box-shadow: var(--shadow-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   position: relative;
   overflow: hidden;
-  /* Decorative top accent strip */
   isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-card::before {
@@ -178,48 +152,45 @@ body {
   z-index: 1;
 }
 
-.status-card__icon {
-  width: 64px;
-  height: 64px;
+/* ============ STATE BLOCKS ============ */
+
+.state {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state--hidden { display: none; }
+
+.state__icon {
+  width: 56px;
+  height: 56px;
   color: var(--brand);
   margin-bottom: 1.25rem;
-  /* Gentle pulse on idle to communicate "in progress" */
-  animation: pulse 3s ease-in-out infinite;
 }
 
-.status-card__icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+.state__icon--success { color: var(--success); }
 
-@keyframes pulse {
-  0%, 100% { 
-    opacity: 0.85;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 1;
-    transform: scale(1.04);
-  }
-}
+.state__icon svg { width: 100%; height: 100%; display: block; }
 
-.status-card__title {
-  font-size: 1.5rem;
+.state__title {
+  font-size: 1.375rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--ink);
   margin-bottom: 0.5rem;
 }
 
-.status-card__body {
+.state__body {
   font-size: 1rem;
   color: var(--ink-mid);
   line-height: 1.55;
-  max-width: 28ch;
+  max-width: 30ch;
 }
 
-.status-card__divider {
+.state__divider {
   width: 32px;
   height: 2px;
   background: var(--line);
@@ -227,31 +198,82 @@ body {
   margin: 1.5rem 0 1rem;
 }
 
-.status-card__hint {
+.state__hint {
   font-size: 0.875rem;
   color: var(--ink-dim);
   max-width: 32ch;
+  line-height: 1.55;
 }
 
-/* ============ TOKEN DISPLAY (debug) ============ */
-
-.token-display {
+.state__btn {
   margin-top: 1.5rem;
-  padding: 0.625rem 0.875rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: var(--brand);
+  color: var(--surface);
+  border: 0;
+  padding: 0.75rem 1.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  min-height: 44px;
+}
+
+.state__btn:hover { background: var(--brand-soft); }
+.state__btn:active { transform: scale(0.97); }
+
+/* ============ SPINNER ============ */
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--brand-tint);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ DEBUG PANEL ============ */
+
+.debug-panel {
+  margin-top: 1.5rem;
+  width: 100%;
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+
+.debug-panel summary {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
   background: var(--surface-2);
   border: 1px dashed var(--line);
   border-radius: var(--r-sm);
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 0.75rem;
-  color: var(--ink-dim);
-  word-break: break-all;
-  direction: ltr;
-  text-align: left;
-  max-width: 100%;
+  user-select: none;
 }
 
-.token-display:empty {
-  display: none;
+.debug-panel summary:hover { color: var(--ink-mid); }
+
+.debug-panel pre {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  color: var(--ink-mid);
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+  line-height: 1.5;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 /* ============ FOOTER ============ */
@@ -263,38 +285,15 @@ body {
   padding-top: 1rem;
 }
 
-.app__footer p {
-  letter-spacing: 0.02em;
-}
-
 /* ============ TABLET / DESKTOP ============ */
 
 @media (min-width: 640px) {
-  .app {
-    padding: 2rem 1.5rem 2.5rem;
-    gap: 2rem;
-  }
-
-  .brand__mark {
-    width: 52px;
-    height: 52px;
-  }
-
-  .brand__name {
-    font-size: 1.25rem;
-  }
-
-  .status-card {
-    padding: 3rem 2rem 2.5rem;
-  }
-
-  .status-card__title {
-    font-size: 1.75rem;
-  }
-
-  .status-card__body {
-    font-size: 1.0625rem;
-  }
+  .app { padding: 2rem 1.5rem 2.5rem; gap: 2rem; }
+  .brand__mark { width: 52px; height: 52px; }
+  .brand__name { font-size: 1.25rem; }
+  .status-card { padding: 3rem 2rem 2.5rem; }
+  .state__title { font-size: 1.625rem; }
+  .state__body { font-size: 1.0625rem; }
 }
 
 /* ============ ACCESSIBILITY ============ */
@@ -304,10 +303,10 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  .spinner { animation: none; border-top-color: transparent; }
 }
 
 /* ============ DARK MODE ============ */
-/* Optional: contractors often work in low light */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -319,16 +318,12 @@ body {
     --brand-soft: #5fa9a4;
     --brand-tint: #1f3838;
     --accent:     #e07a55;
+    --success:    #6dc498;
     --ink:        #f0ebe0;
     --ink-mid:    #b8b3a8;
     --ink-dim:    #888378;
     --line:       #3a4040;
     --line-soft: rgba(125, 196, 192, 0.12);
-  }
-
-  body {
-    background-image:
-      radial-gradient(circle at 1px 1px, var(--line-soft) 1px, transparent 0);
   }
 
   .backdrop {
