@@ -2,7 +2,6 @@
 
 Static website for contractors to price unmatched BOQ items.
 
-
 ## How it works
 
 1. The n8n workflow `create_quta_offer` detects > 10 unmatched items
