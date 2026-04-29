@@ -31,85 +31,123 @@
           <p class="brand__tag" id="project-name">תמחור פריטים</p>
         </div>
       </div>
+      <div class="progress" id="progress" hidden>
+        <span id="progress-count">0 / 0</span>
+        <div class="progress__bar"><div class="progress__fill" id="progress-fill"></div></div>
+      </div>
     </header>
 
-    <!-- Status container — swapped between states -->
-    <section class="status-card" id="status-card">
-
-      <!-- LOADING (initial state) -->
-      <div class="state state--loading" id="state-loading">
+    <!-- LOADING -->
+    <section class="status-card" id="state-loading">
+      <div class="state">
         <div class="spinner" aria-hidden="true"></div>
         <h2 class="state__title">טוען פריטים...</h2>
-        <p class="state__body">רגע אחד</p>
       </div>
+    </section>
 
-      <!-- ERROR: missing token -->
-      <div class="state state--hidden" id="state-no-token">
-        <div class="state__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M12 8 L12 13 M12 16 L12 16.5" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round"/>
-          </svg>
+    <!-- ERROR: no token -->
+    <section class="status-card" id="state-no-token" hidden>
+      <div class="state">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 8 L12 13 M12 16 L12 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
         <h2 class="state__title">קישור לא תקין</h2>
-        <p class="state__body">הקישור שקיבלת אינו מכיל מזהה. אנא חזור לוואטסאפ ולחץ על הקישור המקורי.</p>
+        <p class="state__body">אנא חזור לוואטסאפ ולחץ על הקישור המקורי.</p>
       </div>
+    </section>
 
-      <!-- ERROR: expired or not found -->
-      <div class="state state--hidden" id="state-expired">
-        <div class="state__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M12 7 L12 12 L15 14" stroke="currentColor"
-                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+    <!-- ERROR: expired -->
+    <section class="status-card" id="state-expired" hidden>
+      <div class="state">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7 L12 12 L15 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <h2 class="state__title">הקישור פג תוקף</h2>
         <p class="state__body">קישור זה כבר אושר או שעברו 7 ימים מיצירתו.</p>
-        <div class="state__divider" aria-hidden="true"></div>
-        <p class="state__hint">אנא העלה את כתב הכמויות מחדש בוואטסאפ כדי לקבל קישור חדש.</p>
+        <p class="state__hint">אנא העלה את כתב הכמויות מחדש בוואטסאפ.</p>
       </div>
-
-      <!-- ERROR: server / network -->
-      <div class="state state--hidden" id="state-error">
-        <div class="state__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3 L21 19 L3 19 Z" stroke="currentColor"
-                  stroke-width="1.5" stroke-linejoin="round"/>
-            <path d="M12 10 L12 14 M12 16.5 L12 17" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h2 class="state__title">שגיאה זמנית</h2>
-        <p class="state__body">לא הצלחנו לטעון את הפריטים. נסה שוב בעוד מספר שניות.</p>
-        <button class="state__btn" id="retry-btn" type="button">נסה שוב</button>
-      </div>
-
-      <!-- SUCCESS: data loaded (preview only — Y10 will replace this) -->
-      <div class="state state--hidden" id="state-loaded">
-        <div class="state__icon state__icon--success" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12 L10 17 L19 8" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h2 class="state__title">החיבור פועל</h2>
-        <p class="state__body">נמצאו <span id="item-count">0</span> פריטים לתמחור.</p>
-        <div class="state__divider" aria-hidden="true"></div>
-        <p class="state__hint">בקרוב כאן תהיה הטופס המלא לתמחור.</p>
-        <details class="debug-panel" id="debug-panel">
-          <summary>נתונים גולמיים (לבדיקה)</summary>
-          <pre id="debug-data"></pre>
-        </details>
-      </div>
-
     </section>
 
-    <footer class="app__footer">
-      <p>© י.ה.ב רג'ואן · תמחור מוצפן ופרטי</p>
-    </footer>
+    <!-- ERROR: server -->
+    <section class="status-card" id="state-error" hidden>
+      <div class="state">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 L21 19 L3 19 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10 L12 14 M12 16.5 L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h2 class="state__title">שגיאה זמנית</h2>
+        <p class="state__body">לא הצלחנו לטעון את הפריטים.</p>
+        <button class="state__btn" id="retry-btn" type="button">נסה שוב</button>
+      </div>
+    </section>
+
+    <!-- SUCCESS: items list -->
+    <section class="items" id="items-container" hidden></section>
+
+    <!-- Sticky footer with submit button (hidden until items load) -->
+    <div class="footer-bar" id="footer-bar" hidden>
+      <button class="submit-btn" id="submit-btn" type="button" disabled>
+        <span id="submit-label">אשר את כל המחירים</span>
+      </button>
+    </div>
+
+    <!-- Approved (post-submit) -->
+    <section class="status-card" id="state-approved" hidden>
+      <div class="state">
+        <div class="state__icon state__icon--success">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12 L10 17 L19 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 class="state__title">תודה!</h2>
+        <p class="state__body">המחירים נשלחו בהצלחה.</p>
+        <p class="state__hint">אתה יכול לחזור לוואטסאפ — שלחנו לך הודעה.</p>
+      </div>
+    </section>
   </main>
+
+  <!-- =========================================================
+       ITEM CARD TEMPLATE
+       Cloned and populated by app.js for each item
+  ========================================================= -->
+  <template id="item-template">
+    <article class="item" data-excel-row="">
+      <header class="item__head">
+        <div class="item__head-text">
+          <h3 class="item__title"></h3>
+          <div class="item__meta">
+            <span class="item__qty"></span>
+            <span class="item__category"></span>
+          </div>
+        </div>
+        <div class="item__status" aria-hidden="true"></div>
+      </header>
+
+      <details class="item__why" hidden>
+        <summary>למה זה לא נמצא בקטלוג?</summary>
+        <p class="item__why-text"></p>
+      </details>
+
+      <div class="item__suggestions" hidden>
+        <div class="item__suggestions-label">הצעות מחיר מהאינטרנט</div>
+        <div class="item__chips"></div>
+      </div>
+
+      <div class="item__no-suggestions" hidden>
+        <span>לא נמצאו הצעות אוטומטיות — הזן מחיר ידנית</span>
+      </div>
+
+      <div class="item__inputs">
+        <label class="input-row">
+          <span class="input-row__label">עלות לקבלן</span>
+          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="cost" placeholder="0">
+          <span class="input-row__unit">₪</span>
+        </label>
+        <label class="input-row">
+          <span class="input-row__label">מחיר ללקוח</span>
+          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="client" placeholder="0">
+          <span class="input-row__unit">₪</span>
+        </label>
+      </div>
+    </article>
+  </template>
 
   <script src="app.js"></script>
 </body>
