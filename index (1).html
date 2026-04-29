@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d3b3a">
+  <title>תמחור פריטים | י.ה.ב רג'ואן</title>
+
+  <!-- Heebo: purpose-built Hebrew family, weights tuned for screen -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Subtle background texture, set in CSS via radial gradients -->
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <main class="app">
+    <header class="app__header">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true">
+          <!-- Simple SVG mark: a stylized 'יה' monogram in a rounded square -->
+          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="36" height="36" rx="9" fill="currentColor"/>
+            <path d="M14 12 L14 28 M14 12 L20 12 M26 12 L26 28 L20 28" 
+                  stroke="#fdfaf3" stroke-width="2.5" stroke-linecap="round" 
+                  stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="brand__text">
+          <h1 class="brand__name">י.ה.ב רג'ואן</h1>
+          <p class="brand__tag">תמחור פריטים</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="status-card" id="status-card">
+      <div class="status-card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2 L20 7 L20 17 L12 22 L4 17 L4 7 Z" 
+                stroke="currentColor" stroke-width="1.5" 
+                stroke-linejoin="round" fill="none"/>
+          <path d="M12 2 L12 22 M4 7 L20 7 M4 17 L20 17" 
+                stroke="currentColor" stroke-width="1.5" 
+                stroke-linejoin="round" opacity="0.4"/>
+        </svg>
+      </div>
+      <h2 class="status-card__title">האתר בהקמה</h2>
+      <p class="status-card__body">
+        כאן יופיעו הפריטים מכתב הכמויות שלך לתמחור.
+      </p>
+      <div class="status-card__divider" aria-hidden="true"></div>
+      <p class="status-card__hint">
+        אם הגעת לכאן מהוואטסאפ, חזור בעוד מספר דקות.
+      </p>
+      <div class="token-display" id="token-display"></div>
+    </section>
+
+    <footer class="app__footer">
+      <p>© י.ה.ב רג'ואן · תמחור מוצפן ופרטי</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
