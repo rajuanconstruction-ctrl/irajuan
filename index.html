@@ -31,11 +31,18 @@
           <p class="brand__tag" id="project-name">תמחור פריטים</p>
         </div>
       </div>
-      <div class="progress" id="progress" hidden>
-        <span id="progress-count">0 / 0</span>
-        <div class="progress__bar"><div class="progress__fill" id="progress-fill"></div></div>
-      </div>
     </header>
+
+    <!-- Sticky progress bar -->
+    <div class="progress" id="progress" hidden>
+      <div class="progress__row">
+        <span id="progress-count">0 / 0 פריטים תומחרו</span>
+        <span class="progress__hint" id="progress-hint">השאר 0 לתמחור בהמשך</span>
+      </div>
+      <div class="progress__bar">
+        <div class="progress__fill" id="progress-fill"></div>
+      </div>
+    </div>
 
     <!-- LOADING -->
     <section class="status-card" id="state-loading">
@@ -83,13 +90,6 @@
     <!-- SUCCESS: items list -->
     <section class="items" id="items-container" hidden></section>
 
-    <!-- Sticky footer with submit button (hidden until items load) -->
-    <div class="footer-bar" id="footer-bar" hidden>
-      <button class="submit-btn" id="submit-btn" type="button" disabled>
-        <span id="submit-label">אשר את כל המחירים</span>
-      </button>
-    </div>
-
     <!-- Approved (post-submit) -->
     <section class="status-card" id="state-approved" hidden>
       <div class="state">
@@ -101,11 +101,17 @@
         <p class="state__hint">אתה יכול לחזור לוואטסאפ — שלחנו לך הודעה.</p>
       </div>
     </section>
+
+    <!-- Sticky footer with submit button -->
+    <div class="footer-bar" id="footer-bar" hidden>
+      <button class="submit-btn" id="submit-btn" type="button">
+        <span id="submit-label">אשר את כל המחירים</span>
+      </button>
+    </div>
   </main>
 
   <!-- =========================================================
        ITEM CARD TEMPLATE
-       Cloned and populated by app.js for each item
   ========================================================= -->
   <template id="item-template">
     <article class="item" data-excel-row="">
@@ -131,18 +137,18 @@
       </div>
 
       <div class="item__no-suggestions" hidden>
-        <span>לא נמצאו הצעות אוטומטיות — הזן מחיר ידנית</span>
+        <span>לא נמצאו הצעות אוטומטיות — הזן מחיר ידנית או השאר 0 לתמחור בהמשך</span>
       </div>
 
       <div class="item__inputs">
         <label class="input-row">
           <span class="input-row__label">עלות לקבלן</span>
-          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="cost" placeholder="0">
+          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="cost" value="0">
           <span class="input-row__unit">₪</span>
         </label>
         <label class="input-row">
           <span class="input-row__label">מחיר ללקוח</span>
-          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="client" placeholder="0">
+          <input class="input-row__field" type="number" inputmode="decimal" min="0" step="1" data-field="client" value="0">
           <span class="input-row__unit">₪</span>
         </label>
       </div>
