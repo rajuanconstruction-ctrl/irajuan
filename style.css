@@ -1,6 +1,8 @@
 /* =========================================================
-   Review website — full UI
-   Mobile-first, RTL Hebrew. Warm paper + deep teal.
+   Review website — UI v2
+   - Sticky progress bar
+   - Default 0 + skip semantics
+   - Cleaner approval state (cards + footer hidden)
 ========================================================= */
 
 :root {
@@ -16,6 +18,8 @@
   --accent:       #c45a36;
   --success:      #2d7a4f;
   --success-tint:#d6e8de;
+  --skip:         #7a8585;
+  --skip-tint:    #ebe8e0;
 
   --ink:          #1a2424;
   --ink-mid:      #4a5555;
@@ -32,8 +36,10 @@
               0 2px 8px rgba(26, 36, 36, 0.04);
   --shadow-2: 0 2px 4px rgba(26, 36, 36, 0.05),
               0 8px 24px rgba(26, 36, 36, 0.06);
+  --shadow-stick: 0 4px 12px rgba(26, 36, 36, 0.08);
 
-  --footer-height: 72px;
+  --footer-height: 78px;
+  --progress-height: 64px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,6 +58,11 @@ body {
   overscroll-behavior-y: contain;
   background-image: radial-gradient(circle at 1px 1px, var(--line-soft) 1px, transparent 0);
   background-size: 22px 22px;
+}
+
+/* When approval is shown, no footer = remove its space allowance */
+body.is-approved {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .backdrop {
@@ -77,15 +88,12 @@ body {
 
 /* ============ HEADER ============ */
 
-.app__header {
-  padding: 0.5rem 0 0.25rem;
-}
+.app__header { padding: 0.5rem 0 0.25rem; }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
 }
 
 .brand__mark {
@@ -109,17 +117,52 @@ body {
   white-space: nowrap;
 }
 
+/* ============ STICKY PROGRESS ============ */
+/* Pinned to top while scrolling. Sits below the header at rest, then
+   sticks to the top edge once the user scrolls past it. */
+
 .progress {
+  position: sticky;
+  top: env(safe-area-inset-top, 0);
+  z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   padding: 0.75rem 0.875rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   font-size: 0.8125rem;
   color: var(--ink-mid);
+  box-shadow: var(--shadow-1);
+  /* When stuck, get a slightly stronger shadow to lift it off content */
+  transition: box-shadow 0.2s ease, border-radius 0.2s ease;
+  /* offset for the safe area so it doesn't tuck under iOS notch */
+  margin-top: calc(env(safe-area-inset-top, 0) * -0.5);
 }
+
+.progress.is-stuck {
+  box-shadow: var(--shadow-stick);
+}
+
+.progress__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress__row > span:first-child {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.progress__hint {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  font-weight: 400;
+}
+
 .progress__bar {
   height: 6px;
   background: var(--line);
@@ -206,13 +249,20 @@ body {
   border-radius: var(--r-lg);
   padding: 1.125rem 1rem 1rem;
   box-shadow: var(--shadow-1);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
   position: relative;
 }
 
-.item.is-complete {
+.item.is-priced {
   border-color: var(--success);
   background: linear-gradient(180deg, var(--success-tint) 0%, var(--surface) 30%);
+}
+
+/* "Skipped" state (both prices = 0) — subtle, dimmed, not an error */
+.item.is-skipped {
+  border-color: var(--line);
+  background: var(--surface);
+  opacity: 0.85;
 }
 
 /* ---- header ---- */
@@ -252,7 +302,6 @@ body {
 }
 
 .item__category {
-  /* Truncate long category names — they can be very long in this dataset */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -275,14 +324,24 @@ body {
   transition: background 0.2s ease;
 }
 
-.item.is-complete .item__status {
+.item.is-priced .item__status {
   background: var(--success);
 }
-.item.is-complete .item__status::before {
+.item.is-priced .item__status::before {
   content: '✓';
 }
 
-/* ---- "why no match" — collapsible context ---- */
+.item.is-skipped .item__status {
+  background: var(--skip-tint);
+  color: var(--skip);
+}
+.item.is-skipped .item__status::before {
+  content: '−';
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ---- "why no match" ---- */
 
 .item__why {
   margin-bottom: 0.875rem;
@@ -355,7 +414,7 @@ body {
 .chip.is-median .chip__source { color: var(--brand-tint); }
 .chip.is-median:hover { background: var(--brand-soft); }
 
-/* ---- no-suggestions message ---- */
+/* ---- no-suggestions ---- */
 
 .item__no-suggestions {
   margin-bottom: 0.875rem;
@@ -405,7 +464,6 @@ body {
   width: 100px;
   text-align: left;
   direction: ltr;
-  /* hide spinner buttons */
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -414,7 +472,9 @@ body {
   -webkit-appearance: none;
   margin: 0;
 }
-.input-row__field::placeholder {
+
+/* When the value is 0, dim it slightly so contractor sees "this is the default" */
+.input-row__field.is-zero {
   color: var(--ink-dim);
   font-weight: 400;
 }
@@ -427,7 +487,7 @@ body {
   text-align: center;
 }
 
-/* ============ FOOTER BAR (sticky submit) ============ */
+/* ============ FOOTER BAR ============ */
 
 .footer-bar {
   position: fixed;
@@ -455,20 +515,15 @@ body {
   max-width: 480px;
   min-height: 50px;
   box-shadow: 0 4px 14px rgba(13, 59, 58, 0.25);
-  transition: background 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
 }
-.submit-btn:hover:not(:disabled) { background: var(--brand-soft); }
-.submit-btn:active:not(:disabled) { transform: scale(0.98); }
-.submit-btn:disabled {
-  background: var(--ink-dim);
-  cursor: not-allowed;
-  opacity: 0.7;
-  box-shadow: none;
-}
+.submit-btn:hover { background: var(--brand-soft); }
+.submit-btn:active { transform: scale(0.98); }
 
 .submit-btn.is-loading {
   position: relative;
   color: transparent;
+  pointer-events: none;
 }
 .submit-btn.is-loading::after {
   content: '';
@@ -483,7 +538,7 @@ body {
   animation: spin 0.8s linear infinite;
 }
 
-/* ============ SAVE INDICATOR (floating) ============ */
+/* ============ SAVE TOAST ============ */
 
 .save-toast {
   position: fixed;
@@ -543,6 +598,8 @@ body {
     --accent:     #e07a55;
     --success:    #6dc498;
     --success-tint: #1f3a2a;
+    --skip:       #888378;
+    --skip-tint:  #2a2f2f;
     --ink:        #f0ebe0;
     --ink-mid:    #b8b3a8;
     --ink-dim:    #888378;
