@@ -1,7 +1,5 @@
 // =========================================================
-// Review website — full UI
-// Renders unmatched items with suggested prices, accepts cost +
-// client price per item, autosaves on blur, submits on approve.
+// Review website — UI v2 (final)
 // =========================================================
 
 (function () {
@@ -19,10 +17,11 @@
   };
   const itemsContainer = document.getElementById('items-container');
   const footerBar      = document.getElementById('footer-bar');
-  const projectNameEl  = document.getElementById('project-name');
   const progressEl     = document.getElementById('progress');
+  const projectNameEl  = document.getElementById('project-name');
   const progressCount  = document.getElementById('progress-count');
   const progressFill   = document.getElementById('progress-fill');
+  const progressHint   = document.getElementById('progress-hint');
   const submitBtn      = document.getElementById('submit-btn');
   const submitLabel    = document.getElementById('submit-label');
   const retryBtn       = document.getElementById('retry-btn');
@@ -30,7 +29,7 @@
 
   // ---------- STATE ----------
   let token = null;
-  let items = [];                    // canonical list, mutated as user types
+  let items = [];
   let saveTimer = null;
   let saveToastEl = null;
 
@@ -43,11 +42,24 @@
     footerBar.hidden = true;
     progressEl.hidden = true;
   }
+
   function showItems() {
     Object.values(states).forEach(el => { if (el) el.hidden = true; });
     itemsContainer.hidden = false;
     footerBar.hidden = false;
     progressEl.hidden = false;
+  }
+
+  function showApproved() {
+    // Full clean state: only the thank-you card visible.
+    Object.entries(states).forEach(([key, el]) => {
+      if (el) el.hidden = key !== 'approved';
+    });
+    itemsContainer.hidden = true;
+    footerBar.hidden = true;
+    progressEl.hidden = true;
+    document.body.classList.add('is-approved');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // ---------- TOKEN ----------
@@ -64,13 +76,22 @@
       return '';
     }
   }
+
   function formatNum(n) {
     if (n === null || n === undefined || isNaN(n)) return '';
     return Math.round(n).toLocaleString('he-IL');
   }
-  function isComplete(item) {
+
+  // An item counts as "priced" if BOTH prices are > 0.
+  // An item with both = 0 is "deferred" (יתומחר בהמשך).
+  function isPriced(item) {
     return Number(item.user_unit_cost) > 0
         && Number(item.user_unit_client_price) > 0;
+  }
+
+  function isDeferred(item) {
+    return Number(item.user_unit_cost) === 0
+        && Number(item.user_unit_client_price) === 0;
   }
 
   // ---------- API ----------
@@ -98,7 +119,6 @@
 
   async function submitApproval() {
     submitBtn.classList.add('is-loading');
-    submitBtn.disabled = true;
     try {
       const res = await fetch(`${API_BASE}/review/approve?token=${encodeURIComponent(token)}`, {
         method: 'POST',
@@ -107,24 +127,15 @@
       });
       const data = await res.json();
       if (res.status === 200 && data.approved) {
-        showState('approved');
+        showApproved();
         return;
       }
-      if (data.error === 'items_not_fully_priced') {
-        // Highlight unpriced rows
-        flashSaveToast(data.message || 'יש פריטים ללא מחיר');
-        const unpricedRows = (data.unpriced_items || []).map(u => u._excel_row);
-        highlightUnpricedRows(unpricedRows);
-        submitBtn.classList.remove('is-loading');
-        submitBtn.disabled = false;
-        return;
-      }
-      throw new Error(data.error || 'unknown');
+      flashSaveToast(data.message || 'שגיאה בשליחה');
+      submitBtn.classList.remove('is-loading');
     } catch (e) {
       console.error('[approve] failed:', e);
       flashSaveToast('שגיאה בשליחה — נסה שוב');
       submitBtn.classList.remove('is-loading');
-      submitBtn.disabled = false;
     }
   }
 
@@ -151,10 +162,33 @@
     toastHideTimer = setTimeout(() => el.classList.remove('is-visible'), 1800);
   }
 
+  // ---------- STICKY PROGRESS DETECTION ----------
+  function setupStickyDetection() {
+    if (!progressEl) return;
+    const sentinel = document.createElement('div');
+    sentinel.style.cssText = 'position:absolute;height:1px;width:100%;pointer-events:none;';
+    progressEl.parentNode.insertBefore(sentinel, progressEl);
+
+    const obs = new IntersectionObserver(entries => {
+      const isStuck = !entries[0].isIntersecting;
+      progressEl.classList.toggle('is-stuck', isStuck);
+    }, { threshold: 0 });
+
+    obs.observe(sentinel);
+  }
+
   // ---------- RENDERING ----------
   function renderItems() {
     itemsContainer.innerHTML = '';
     items.forEach(item => {
+      // Default both price fields to 0
+      if (item.user_unit_cost === null || item.user_unit_cost === undefined) {
+        item.user_unit_cost = 0;
+      }
+      if (item.user_unit_client_price === null || item.user_unit_client_price === undefined) {
+        item.user_unit_client_price = 0;
+      }
+
       const card = itemTemplate.content.firstElementChild.cloneNode(true);
       card.dataset.excelRow = item._excel_row;
 
@@ -164,12 +198,11 @@
       qtyEl.textContent = `${item.Quantity || 0} ${item.Unit || ''}`.trim();
 
       const catEl = card.querySelector('.item__category');
-      // Categories in this dataset can be very long — show only first phrase
       const shortCat = (item.Category || '').split(/[(\-]/)[0].trim();
       catEl.textContent = shortCat || '';
       if (!shortCat) catEl.style.display = 'none';
 
-      // Why no match (collapsible context)
+      // Why no match
       const whyEl = card.querySelector('.item__why');
       if (item.reason) {
         whyEl.hidden = false;
@@ -197,7 +230,6 @@
             ${domain ? `<span class="chip__source">${domain}</span>` : ''}
           `;
           chip.addEventListener('click', () => {
-            // Fill cost input with this value
             const costInput = card.querySelector('input[data-field="cost"]');
             costInput.value = Math.round(p.value);
             costInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -209,71 +241,82 @@
         noSugWrap.hidden = false;
       }
 
-      // Inputs — wire change events
+      // Inputs
       const costInput   = card.querySelector('input[data-field="cost"]');
       const clientInput = card.querySelector('input[data-field="client"]');
 
-      // Restore previous values if any (autosave came back)
-      if (item.user_unit_cost) costInput.value = item.user_unit_cost;
-      if (item.user_unit_client_price) clientInput.value = item.user_unit_client_price;
+      costInput.value = item.user_unit_cost;
+      clientInput.value = item.user_unit_client_price;
 
-      function handleInput(field, input) {
-        return function () {
+      function setupZeroHandling(input, field) {
+        // On focus: if value is 0, clear so user doesn't have to delete it
+        input.addEventListener('focus', () => {
+          if (Number(input.value) === 0) input.value = '';
+        });
+        // On blur: if empty, restore to 0
+        input.addEventListener('blur', () => {
+          if (input.value === '' || isNaN(parseFloat(input.value))) {
+            input.value = 0;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        });
+        input.addEventListener('input', () => {
           const val = parseFloat(input.value);
-          item[field] = isFinite(val) && val > 0 ? val : null;
-          // Visual: filled state on this input row
-          input.closest('.input-row').classList.toggle('is-filled', !!item[field]);
+          item[field] = isFinite(val) && val >= 0 ? val : 0;
+          input.classList.toggle('is-zero', Number(item[field]) === 0);
+          input.closest('.input-row').classList.toggle('is-filled', Number(item[field]) > 0);
           updateItemStatus(card, item);
           updateProgress();
-          updateSubmitState();
           scheduleSave();
-        };
+        });
       }
-      costInput.addEventListener('input', handleInput('user_unit_cost', costInput));
-      clientInput.addEventListener('input', handleInput('user_unit_client_price', clientInput));
+
+      setupZeroHandling(costInput, 'user_unit_cost');
+      setupZeroHandling(clientInput, 'user_unit_client_price');
 
       // Initial visual state
-      if (item.user_unit_cost) costInput.closest('.input-row').classList.add('is-filled');
-      if (item.user_unit_client_price) clientInput.closest('.input-row').classList.add('is-filled');
+      costInput.classList.toggle('is-zero', Number(item.user_unit_cost) === 0);
+      clientInput.classList.toggle('is-zero', Number(item.user_unit_client_price) === 0);
+      if (Number(item.user_unit_cost) > 0) costInput.closest('.input-row').classList.add('is-filled');
+      if (Number(item.user_unit_client_price) > 0) clientInput.closest('.input-row').classList.add('is-filled');
       updateItemStatus(card, item);
 
       itemsContainer.appendChild(card);
     });
 
     updateProgress();
-    updateSubmitState();
+    updateSubmitLabel();
   }
 
   function updateItemStatus(card, item) {
-    card.classList.toggle('is-complete', isComplete(item));
+    card.classList.toggle('is-priced', isPriced(item));
+    card.classList.toggle('is-skipped', isDeferred(item));
   }
 
   function updateProgress() {
     const total = items.length;
-    const done = items.filter(isComplete).length;
-    progressCount.textContent = `${done} / ${total} פריטים תומחרו`;
-    const pct = total === 0 ? 0 : (done / total) * 100;
+    const priced = items.filter(isPriced).length;
+    const deferred = items.filter(isDeferred).length;
+    const decided = priced + deferred;
+
+    progressCount.textContent = deferred > 0
+      ? `${priced} תומחרו · ${deferred} בהמשך · מתוך ${total}`
+      : `${priced} / ${total} פריטים תומחרו`;
+
+    const pct = total === 0 ? 0 : (decided / total) * 100;
     progressFill.style.width = `${pct}%`;
+
+    updateSubmitLabel();
   }
 
-  function updateSubmitState() {
-    const allDone = items.length > 0 && items.every(isComplete);
-    submitBtn.disabled = !allDone;
-    submitLabel.textContent = allDone
-      ? 'אשר את כל המחירים'
-      : `יש למלא ${items.filter(i => !isComplete(i)).length} פריטים נוספים`;
-  }
-
-  function highlightUnpricedRows(rows) {
-    rows.forEach(rowNum => {
-      const card = itemsContainer.querySelector(`[data-excel-row="${rowNum}"]`);
-      if (!card) return;
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      card.style.animation = 'none';
-      requestAnimationFrame(() => {
-        card.style.animation = 'shake 0.4s ease';
-      });
-    });
+  function updateSubmitLabel() {
+    const priced = items.filter(isPriced).length;
+    const deferred = items.filter(isDeferred).length;
+    if (deferred > 0) {
+      submitLabel.textContent = `אשר ${priced} פריטים (${deferred} בהמשך)`;
+    } else {
+      submitLabel.textContent = 'אשר את כל המחירים';
+    }
   }
 
   // ---------- INIT ----------
@@ -287,11 +330,11 @@
       items = data.items || [];
       if (data.project_name) projectNameEl.textContent = data.project_name;
       if (items.length === 0) {
-        // Edge case: review row exists but no items
-        return showState('approved');
+        return showApproved();
       }
       renderItems();
       showItems();
+      setupStickyDetection();
     } catch (e) {
       const reason = e.message;
       if (reason === 'expired') return showState('expired');
@@ -304,14 +347,3 @@
 
   init();
 })();
-
-// Shake animation for highlighting unpriced rows
-const styleEl = document.createElement('style');
-styleEl.textContent = `
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-  }
-`;
-document.head.appendChild(styleEl);
