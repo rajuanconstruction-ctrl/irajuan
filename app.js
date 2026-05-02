@@ -6,6 +6,7 @@
   // ---------- CONFIG ----------
   const API_BASE = 'https://n8n.srv1240771.hstgr.cloud/webhook';
   const AUTOSAVE_DEBOUNCE_MS = 600;
+  const THANKS_PAGE = 'thanks.html';
 
   // ---------- DOM ----------
   const states = {
@@ -51,15 +52,8 @@
   }
 
   function showApproved() {
-    // Full clean state: only the thank-you card visible.
-    Object.entries(states).forEach(([key, el]) => {
-      if (el) el.hidden = key !== 'approved';
-    });
-    itemsContainer.hidden = true;
-    footerBar.hidden = true;
-    progressEl.hidden = true;
-    document.body.classList.add('is-approved');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Redirect to the dedicated thanks page
+    window.location.href = `${THANKS_PAGE}?token=${encodeURIComponent(token || '')}`;
   }
 
   // ---------- TOKEN ----------
